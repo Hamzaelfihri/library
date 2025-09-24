@@ -1,11 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Bibliothèque</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        section { margin-bottom: 40px; }
+        form input, form select { margin: 5px; }
+        button { margin-left: 10px; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin: 5px 0; }
+    </style>
 </head>
 <body>
-    <h1>hamza</h1>   
+    <!-- Section Livres -->
+    <section id="livres">
+        <h2>Gestion des Livres</h2>
+        <form id="form-livre" 
+        onsubmit="ajouterLivre(
+            document.getElementById('titre').value,
+            document.getElementById('auteur').value,
+            document.getElementById('quantite').value
+        ); this.reset(); return false;">
+        
+    <input type="text" id="titre" placeholder="Titre">
+    <input type="text" id="auteur" placeholder="Auteur">
+    <input type="number" id="quantite" placeholder="Quantité">
+    <button type="submit">Ajouter</button>
+  </form>
+        <div id="liste-livres">
+            <!-- Liste des livres -->
+        </div>
+    </section>
+
+    <!-- Section Utilisateurs -->
+    <section id="utilisateurs">
+        <h2>Gestion des Utilisateurs</h2>
+        <form id="form-utilisateur" onsubmit="ajouterUtilisateur(
+            document.getElementById('nom').value,
+            document.getElementById('prenom').value,
+            document.getElementById('email').value); this.reset(); return false;">
+            <input type="text" id="nom" placeholder="Nom">
+            <input type="text" id="prenom" placeholder="Prénom">
+            <input type="email" id="email" placeholder="Email">
+            <button type="submit">Ajouter Utilisateur</button>
+        </form>
+        <div id="liste-utilisateurs">
+            <!-- Liste des utilisateurs -->
+        </div>
+    </section>
+
+    <!-- Section Emprunts -->
+    <section id="emprunts">
+        <h2>Gestion des Emprunts</h2>
+        <form id="form-emprunt" onsubmit="event.preventDefault(); emprunterLivre();">
+            <select id="utilisateurId">
+                <option value="">Sélectionnez un utilisateur</option>
+            </select>
+            <select id="livreId">
+                <option value="">Sélectionnez un livre</option>
+            </select>
+            <button type="submit">Emprunter</button>
+        </form>
+        <div id="liste-emprunts">
+            <!-- Liste des emprunts -->
+        </div>
+    </section>
+
+    <!-- Script JS -->
+    <script src="script.js"></script>
 </body>
 </html>
