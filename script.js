@@ -5,10 +5,9 @@ let prochainIdLivre = 1;
 let prochainIdUtilisateur = 1;
 let prochainIdEmprunt = 1;
 
+
 // --------- Livres ---------
-function ajouterLivre(titre,auteur,quantite) {
-    titre = titre;
-    auteur = auteur;
+function ajouterLivre(titre, auteur, quantite) {
     quantite = parseInt(quantite);
 
     if (!titre || !auteur || !quantite || quantite <= 0) {
@@ -18,14 +17,15 @@ function ajouterLivre(titre,auteur,quantite) {
 
     const nouveauLivre = {
         id: prochainIdLivre++,
-        titre: titre,
-        auteur: auteur,
+        titre: titre.trim(),
+        auteur: auteur.trim(),
         quantite: quantite,
         quantiteDisponible: quantite
     };
 
     livres.push(nouveauLivre);
     afficherLivres();
+    remplirSelects(); // Met à jour les selects pour les emprunts
     document.getElementById("form-livre").reset();
     return { succes: true, message: "Livre ajouté avec succès", livre: nouveauLivre };
 }
@@ -55,42 +55,152 @@ function afficherLivres() {
 }
 
 function supprimerLivre(id) {
-    const ind = livres.findIndex(livre => livre.id === id);
-    if (ind === -1) {
-        return { succes: false, message: "Le livre n'existe pas" };
-    }
-    livres.splice(ind, 1);
+    livres = livres.filter(l => l.id !== id);
     afficherLivres();
-    return { succes: true, message: "Livre supprimé avec succès" };
+    remplirSelects();
 }
 
 // --------- Utilisateurs ---------
 function ajouterUtilisateur(nom, prenom, email) {
-    // Créer et ajouter un utilisateur
-    nom = nom;
-    prenom = prenom;
-    email = email;
-    if(!nom || !prenom || !email){
-        return{ succes : false, message : "tous champs sont obligatoires"}
+    if (!nom || !prenom || !email) {
+        alert("Tous les champs sont obligatoires !");
+        return { succes: false, message: "Champs invalides" };
     }
-    if(!email.includes('@') || !email.includes('.'))
-    nouveauUser = {
-        id : prochainIdUtilisateur,
-        nom : nom,
-        prenom : prenom,
-        email : email,
+
+    if (!email.includes('@') || !email.includes('.')) {
+        alert("Email invalide !");
+        return { succes: false, message: "Email invalide" };
     }
+
+    const nouveauUser = {
+        id: prochainIdUtilisateur++,
+        nom: nom.trim(),
+        prenom: prenom.trim(),
+        email: email.trim(),
+    };
+
     utilisateurs.push(nouveauUser);
     afficherUtilisateurs();
+    remplirSelects(); // Met à jour les selects pour les emprunts
     document.getElementById("form-utilisateur").reset();
-    return { succes: true, message: "utilisateur est ajouté avec succès", livre: nouveauUser };
-
+    return { succes: true, message: "Utilisateur ajouté avec succès", utilisateur: nouveauUser };
 }
 
 function afficherUtilisateurs() {
-    // Afficher la liste des utilisateurs dans le DOM
+    const cont = document.getElementById("liste-utilisateurs");
+    cont.innerHTML = "";
+
+    if (utilisateurs.length === 0) {
+        cont.textContent = "Aucun utilisateur disponible.";
+        return;
+    }
+
+    const ul = document.createElement("ul");
+    utilisateurs.forEach(utilisateur => {
+        const li = document.createElement("li");
+        li.textContent = `${utilisateur.nom} | ${utilisateur.prenom} | ${utilisateur.email}`;
+
+        const btnSuppr = document.createElement("button");
+        btnSuppr.textContent = "Supprimer";
+        btnSuppr.onclick = () => supprimerUtilisateur(utilisateur.id);
+
+        li.appendChild(btnSuppr);
+        ul.appendChild(li);
+    });
+    cont.appendChild(ul);
 }
 
 function supprimerUtilisateur(id) {
-    // Supprimer un utilisateur par son ID
+    utilisateurs = utilisateurs.filter(u => u.id !== id);
+    afficherUtilisateurs();
+    remplirSelects();
+}
+
+// --------- Emprunts ---------
+function emprunterLivre() {
+    const utilisateurId = parseInt(document.getElementById("utilisateurId").value);
+    const livreId = parseInt(document.getElementById("livreId").value);
+
+    if (!utilisateurId || !livreId) {
+        alert("Veuillez sélectionner un utilisateur et un livre.");
+        return;
+    }
+
+    const utilisateur = utilisateurs.find(u => u.id === utilisateurId);
+    const livre = livres.find(l => l.id === livreId);
+
+    if (!livre || livre.quantiteDisponible <= 0) {
+        alert("Ce livre n'est pas disponible.");
+        return;
+    }
+
+    const nouvelEmprunt = {
+        id: prochainIdEmprunt++,
+        utilisateurId: utilisateur.id,
+        livreId: livre.id,
+        dateEmprunt: new Date(),
+        retourne: false
+    };
+
+    emprunts.push(nouvelEmprunt);
+    livre.quantiteDisponible--;
+    afficherEmprunts();
+    afficherLivres();
+    remplirSelects();
+}
+
+function retournerLivre(empruntId) {
+    const emprunt = emprunts.find(e => e.id === empruntId);
+    if (!emprunt || emprunt.retourne) return;
+
+    emprunt.retourne = true;
+    const livre = livres.find(l => l.id === emprunt.livreId);
+    if (livre) livre.quantiteDisponible++;
+    afficherEmprunts();
+    remplirSelects();
+}
+
+function afficherEmprunts() {
+    const cont = document.getElementById("liste-emprunts");
+    cont.innerHTML = "";
+
+    const empruntsActifs = emprunts.filter(e => !e.retourne);
+
+    if (empruntsActifs.length === 0) {
+        cont.textContent = "Aucun emprunt actif.";
+        return;
+    }
+
+    const ul = document.createElement("ul");
+    empruntsActifs.forEach(e => {
+        const utilisateur = utilisateurs.find(u => u.id === e.utilisateurId);
+        const livre = livres.find(l => l.id === e.livreId);
+
+        const li = document.createElement("li");
+        li.textContent = `${utilisateur.nom} ${utilisateur.prenom} a emprunté "${livre.titre}" le ${e.dateEmprunt.toLocaleDateString()}`;
+
+        const btnRetour = document.createElement("button");
+        btnRetour.textContent = "Retourner";
+        btnRetour.onclick = () => retournerLivre(e.id);
+
+        li.appendChild(btnRetour);
+        ul.appendChild(li);
+    });
+
+    cont.appendChild(ul);
+}
+
+function remplirSelects() {
+    const selUtilisateur = document.getElementById("utilisateurId");
+    const selLivre = document.getElementById("livreId");
+
+    selUtilisateur.innerHTML = `<option value="">Sélectionnez un utilisateur</option>`;
+    utilisateurs.forEach(u => {
+        selUtilisateur.innerHTML += `<option value="${u.id}">${u.nom} ${u.prenom}</option>`;
+    });
+
+    selLivre.innerHTML = `<option value="">Sélectionnez un livre</option>`;
+    livres.forEach(l => {
+        selLivre.innerHTML += `<option value="${l.id}">${l.titre} (${l.quantiteDisponible} disponibles)</option>`;
+    });
 }
